@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
 
@@ -22,7 +22,7 @@ function HomePage() {
   return (
     <section className="terminal-page home-page" id="home" aria-labelledby="home-title">
       <div className="hero-copy">
-        <h1 id="home-title">Matthew Menne<span className="cursor">_</span></h1>
+        <h1 id="home-title">Matthew Menne</h1>
         <p className="hero-description">
           Virtual and immersive technologies developer <span className="hero-divider">/</span> Court Jester
         </p>
@@ -285,6 +285,7 @@ function App() {
   const [flickerKey, setFlickerKey] = useState(0);
   const [flickerLines, setFlickerLines] = useState([]);
   const stageRef = useRef(null);
+  const openingTypewriter = useRef(true);
   const scrollLock = useRef(false);
   const transitionTimeout = useRef(null);
   const touchStartY = useRef(null);
@@ -376,13 +377,20 @@ function App() {
     const updateWorkPageSize = () => {
       const isMobile = window.matchMedia('(max-width: 700px)').matches;
       const compact = window.innerHeight <= 650;
-      const availableHeight = window.innerHeight - (compact ? 143 : 214);
-      const estimatedProjectHeight = window.innerWidth <= 360
+      const availableHeight = window.innerHeight - (
+        isMobile ? (compact ? 143 : 214) : (compact ? 236 : 214)
+      );
+      const estimatedProjectHeight = !isMobile && compact
+        ? 78
+        : window.innerWidth <= 360
         ? (compact ? 112 : 150)
         : (compact ? 112 : 126);
+      const fittingPageSize = Math.floor(availableHeight / estimatedProjectHeight);
       const nextSize = isMobile
-        ? Math.max(1, Math.floor(availableHeight / estimatedProjectHeight))
-        : projectsPerPage;
+        ? Math.max(1, fittingPageSize)
+        : compact
+          ? Math.max(1, Math.min(projectsPerPage, fittingPageSize))
+          : projectsPerPage;
       setWorkPageSize(nextSize);
       setWorkPage((current) => Math.min(current, Math.ceil(projects.length / nextSize) - 1));
     };
@@ -437,6 +445,87 @@ function App() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activePage, goToPage, isStarted, movePage, triggerFlicker]);
+
+  useLayoutEffect(() => {
+    if (!isStarted) return undefined;
+    const stage = stageRef.current;
+    const activeViewport = stage?.querySelector('.page-viewport:not([hidden])');
+    if (!activeViewport) return undefined;
+
+    const includeInterface = openingTypewriter.current;
+    openingTypewriter.current = false;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+
+    const roots = [activeViewport];
+    if (includeInterface) {
+      roots.push(
+        document.querySelector('.terminal-topbar'),
+        document.querySelector('.terminal-nav'),
+      );
+    }
+
+    const textNodes = [];
+    roots.filter(Boolean).forEach((root) => {
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      let node = walker.nextNode();
+      while (node) {
+        if (
+          node.nodeValue.trim()
+          && !node.parentElement.closest('.cursor, .page-indicator')
+        ) {
+          const isBodyText = activeViewport.contains(node.parentElement)
+            && !node.parentElement.closest('h1, h2, h3, h4, h5, h6');
+          textNodes.push({
+            node,
+            text: node.nodeValue,
+            parent: node.parentElement,
+            characterDelay: isBodyText ? 6 : 14,
+            startDelay: textNodes.length * 8,
+          });
+        }
+        node = walker.nextNode();
+      }
+    });
+
+    if (!textNodes.length) return undefined;
+    textNodes.forEach(({ node }) => { node.nodeValue = ''; });
+
+    let frameId;
+    let startTime;
+    const animateText = (timestamp) => {
+      if (startTime === undefined) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+      let remaining = 0;
+      textNodes.forEach(({ node, text, parent, startDelay, characterDelay }) => {
+        const characterCount = Math.min(
+          text.length,
+          Math.max(0, Math.floor((elapsed - startDelay) / characterDelay) + 1),
+        );
+        if (characterCount > 0) {
+          node.nodeValue = text.slice(0, characterCount);
+          if (characterCount < text.length) {
+            if (!parent.closest('h1, h2, h3')) parent.classList.add('typewriter-active');
+            remaining += 1;
+          } else {
+            parent.classList.remove('typewriter-active');
+          }
+        } else {
+          remaining += 1;
+        }
+      });
+      if (remaining > 0) frameId = window.requestAnimationFrame(animateText);
+      else textNodes.forEach(({ node, text }) => { node.nodeValue = text; });
+    };
+    frameId = window.requestAnimationFrame(animateText);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      textNodes.forEach(({ node, text, parent }) => {
+        node.nodeValue = text;
+        parent.classList.remove('typewriter-active');
+      });
+    };
+  }, [aboutPage, activePage, isStarted, workPage, workPageSize]);
 
   return (
     <main className="scene">

@@ -31,8 +31,8 @@ a { color: inherit; }
   filter: drop-shadow(0 22px 28px rgba(0,0,0,.7));
 }
 .monitor-screen {
-  height: min(680px, 82vh);
-  min-height: 520px;
+  height: min(680px, 82vh, calc(100svh - 64px));
+  min-height: min(520px, calc(100svh - 64px));
   padding: 15px;
   border: 1px solid #444;
   border-radius: 20px;
@@ -162,7 +162,11 @@ a { color: inherit; }
 h1, h2, h3, p { margin-top: 0; }
 h1, h2, h3 { font-family: inherit; text-shadow: 0 0 10px rgba(183,217,154,.55); }
 h1 { margin-bottom: 16px; color: var(--green); font-size: clamp(32px, 5vw, 52px); font-weight: 400; text-shadow: 0 0 10px rgba(183,217,154,.55); }
-.cursor { animation: blink 1.1s steps(2) infinite; }
+h1::after, h2::after, h3::after, .typewriter-active::after {
+  content: '_';
+  color: var(--green);
+  animation: blink 1.1s steps(2) infinite;
+}
 @keyframes blink { 50% { opacity: 0; } }
 .hero-description { color: #d0d5c7; font-size: 15px; line-height: 1.7; }
 .hero-divider { color: var(--muted); }
@@ -198,13 +202,13 @@ h1 { margin-bottom: 16px; color: var(--green); font-size: clamp(32px, 5vw, 52px)
 .experience-item h3 { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 6px; color: var(--green); font-size: 12px; font-weight: 400; text-shadow: 0 0 10px rgba(183,217,154,.55); }
 .experience-item h3 span { color: var(--muted); font-size: 10px; white-space: nowrap; text-shadow: none; }
 .experience-item p { max-width: 650px; margin: 0; color: #d0d5c7; font-size: 11px; line-height: 1.5; }
-.contact-content { margin: auto 0; max-width: 560px; padding: 40px 0; }
+.contact-content { margin: auto 0; max-width: 600px; padding: 40px 0; }
 .contact-content h2 { margin-bottom: 18px; color: var(--green); font-size: clamp(38px, 6vw, 62px); font-weight: 400; text-shadow: 0 0 10px rgba(183,217,154,.55); }
 .contact-copy { color: #d0d5c7; font-size: 14px; }
 .email-link { display: flex; justify-content: space-between; gap: 16px; margin-top: 24px; padding: 12px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); color: var(--green); font-size: 13px; text-decoration: none; }
 .email-link:hover { color: #fff; text-shadow: 0 0 10px rgba(183,217,154,.55); 
   animation: link-pulse 1.5s linear infinite;}
-.terminal-footer { display: flex; justify-content: space-between; margin-top: auto; padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; }email-link
+.terminal-footer { display: flex; justify-content: space-between; margin-top: auto; padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; }
 .terminal-footer a { text-decoration: none; }
 
 @keyframes link-pulse {
@@ -288,6 +292,12 @@ h1 { margin-bottom: 16px; color: var(--green); font-size: clamp(32px, 5vw, 52px)
   .about-page .experience-item h3 { margin-bottom: 4px; font-size: 10px; }
   .about-page .experience-item h3 span { font-size: 9px; }
   .about-page .experience-item p { font-size: 10px; line-height: 1.4; }
+}
+
+@media (max-width: 700px) and (max-height: 400px) {
+  .about-page .section-title { margin: 4px 0 5px; font-size: 18px; }
+  .about-page .about-copy { margin-top: 2px; }
+  .about-page .about-copy p { margin-bottom: 6px; font-size: 10px; line-height: 1.3; }
 }
 
 @media (prefers-reduced-motion: reduce) {
