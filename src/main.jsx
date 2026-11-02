@@ -469,17 +469,18 @@ function App() {
       const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
       let node = walker.nextNode();
       while (node) {
+        const isActivePageText = activeViewport.contains(node.parentElement);
+        const isHeadingText = node.parentElement.closest('h1, h2, h3, h4, h5, h6');
         if (
           node.nodeValue.trim()
           && !node.parentElement.closest('.cursor, .page-indicator')
+          && ((!isActivePageText && includeInterface) || isHeadingText)
         ) {
-          const isBodyText = activeViewport.contains(node.parentElement)
-            && !node.parentElement.closest('h1, h2, h3, h4, h5, h6');
           textNodes.push({
             node,
             text: node.nodeValue,
             parent: node.parentElement,
-            characterDelay: isBodyText ? 6 : 14,
+            characterDelay: 14,
             startDelay: textNodes.length * 8,
           });
         }
